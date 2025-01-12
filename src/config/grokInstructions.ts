@@ -45,14 +45,6 @@ export interface GameContext {
   completedQuests: string[];
   relationships: Record<string, number>;
   currentLocation: string;
-  dayNumber: number;
-  dailyProgress: {
-    essenceEarned: number;
-    essenceSpent: number;
-    newLocations: string[];
-    keyDecisions: string[];
-    questProgress: string[];
-  };
 }
 
 export const INITIAL_CONTEXT: GameContext = {
@@ -62,15 +54,7 @@ export const INITIAL_CONTEXT: GameContext = {
   visitedLocations: ['starting_room'],
   completedQuests: [],
   relationships: {},
-  currentLocation: 'starting_room',
-  dayNumber: 1,
-  dailyProgress: {
-    essenceEarned: 0,
-    essenceSpent: 0,
-    newLocations: [],
-    keyDecisions: [],
-    questProgress: []
-  }
+  currentLocation: 'starting_room'
 };
 
 export const TIME_MODIFIERS = {

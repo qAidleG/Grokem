@@ -30,12 +30,6 @@ interface GameOption {
 export default function GameScreen({ gameState, setGameState, onExit, onSettings }: GameScreenProps) {
   const [isEssenceChanging, setIsEssenceChanging] = useState(false);
   const [showExitOptions, setShowExitOptions] = useState(false);
-  const [showDayRecap, setShowDayRecap] = useState(false);
-  const [morningTransition, setMorningTransition] = useState<{
-    sceneText: string;
-    dialogText: string;
-    options: Array<{ text: string }>;
-  } | null>(null);
 
   // Add useEffect to handle essence changes
   useEffect(() => {
@@ -333,7 +327,7 @@ export default function GameScreen({ gameState, setGameState, onExit, onSettings
               role: "user",
               content: [{ 
                 type: "text", 
-                text: "The player has chosen to sleep till morning. Please provide a day recap and next morning scene in JSON format with the following structure: { timeOfDay: 'MORNING', sceneText: string (2-3 sentences describing the morning scene), dialogText: string (must start with 'Speaker: ' followed by the message), options: Array<{ text: string }>, metadata: { dailyRecap: { dayNumber: number, essenceEarned: number, essenceSpent: number, newLocations: string[], keyDecisions: string[], questProgress: string[] } } }"
+                text: "The player has chosen to sleep till morning. Please provide the next morning scene in JSON format with the following structure: { timeOfDay: 'MORNING', sceneText: string (2-3 sentences describing the morning scene), dialogText: string (must start with 'Speaker: ' followed by the message), options: Array<{ text: string }> }"
               }]
             }
           ],
@@ -352,17 +346,21 @@ export default function GameScreen({ gameState, setGameState, onExit, onSettings
       const cleanedResponse = responseText.replace(/```json\n|\n```/g, '').trim();
       const apiResponse = JSON.parse(cleanedResponse);
 
-      // Show the day recap and store API response for the morning transition
-      setShowDayRecap(true);
+      // Update game state directly with the morning scene
       setGameState(prev => ({
         ...prev,
-        dayRecap: apiResponse.metadata.dailyRecap
+        day: prev.day + 1,
+        timeOfDay: 'MORNING',
+        scene: {
+          ...prev.scene,
+          sceneText: apiResponse.sceneText,
+          dialogText: apiResponse.dialogText,
+          options: apiResponse.options.map((opt: GameOption) => ({
+            text: opt.text,
+            action: async () => await handleOptionSelect(opt)
+          }))
+        }
       }));
-      setMorningTransition({
-        sceneText: apiResponse.sceneText,
-        dialogText: apiResponse.dialogText,
-        options: apiResponse.options
-      });
 
     } catch (error) {
       console.error('Sleep Action Error:', error);
@@ -523,78 +521,6 @@ export default function GameScreen({ gameState, setGameState, onExit, onSettings
               <span className="text-[10px]">Exit</span>
             </button>
           </div>
-
-          {/* Day Recap Overlay */}
-          {showDayRecap && gameState.dayRecap && morningTransition && (
-            <div className="absolute inset-0 bg-black bg-opacity-90 flex items-start justify-center p-8 pt-20">
-              <div className="bg-black bg-opacity-60 backdrop-blur-md rounded-lg p-6 w-full max-w-md text-white">
-                <h2 className="text-2xl font-bold mb-4 text-amber-400">Day {gameState.dayRecap.dayNumber} Complete</h2>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-amber-400 font-semibold">Essence</h3>
-                    <p>Earned: ⟠{gameState.dayRecap.essenceEarned}</p>
-                    <p>Spent: ⟠{gameState.dayRecap.essenceSpent}</p>
-                  </div>
-                  {gameState.dayRecap.newLocations.length > 0 && (
-                    <div>
-                      <h3 className="text-amber-400 font-semibold">Discovered</h3>
-                      <ul className="list-disc list-inside">
-                        {gameState.dayRecap.newLocations.map((location, i) => (
-                          <li key={i}>{location}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {gameState.dayRecap.keyDecisions.length > 0 && (
-                    <div>
-                      <h3 className="text-amber-400 font-semibold">Key Decisions</h3>
-                      <ul className="list-disc list-inside">
-                        {gameState.dayRecap.keyDecisions.map((decision, i) => (
-                          <li key={i}>{decision}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {gameState.dayRecap.questProgress.length > 0 && (
-                    <div>
-                      <h3 className="text-amber-400 font-semibold">Quest Progress</h3>
-                      <ul className="list-disc list-inside">
-                        {gameState.dayRecap.questProgress.map((progress, i) => (
-                          <li key={i}>{progress}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => {
-                      setShowDayRecap(false);
-                      setGameState(prev => ({
-                        ...prev,
-                        day: prev.day + 1,
-                        timeOfDay: 'MORNING',
-                        dayRecap: undefined,
-                        scene: {
-                          ...prev.scene,
-                          sceneText: morningTransition.sceneText,
-                          dialogText: morningTransition.dialogText,
-                          options: morningTransition.options.map((newOpt: GameOption) => ({
-                            text: newOpt.text,
-                            action: async () => await handleOptionSelect(newOpt)
-                          }))
-                        }
-                      }));
-                      setMorningTransition(null);
-                    }}
-                    className="w-full mt-6 bg-indigo-900 bg-opacity-60 hover:bg-opacity-70 
-                             backdrop-blur-sm text-white p-3 rounded-lg transition-all
-                             border border-indigo-400/30 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]"
-                  >
-                    Continue to Morning
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

@@ -4,7 +4,6 @@ import GameScreen from './components/GameScreen'
 import SettingsScreen from './components/SettingsScreen'
 import { TimeOfDay } from './types/game'
 import { INTRO_SCENE, RULES } from './config/gameLore'
-import { ResponseStructure } from './config/grokInstructions'
 
 type Screen = 'menu' | 'game' | 'settings'
 
@@ -22,7 +21,6 @@ export interface GameState {
       action: () => void;
     }>;
   };
-  dayRecap?: ResponseStructure['metadata']['dailyRecap'];
 }
 
 function App() {
